@@ -3658,7 +3658,7 @@ function showIncomingCallUI(phoneNumber) {
         } catch (e) {
           console.warn('Rejection wait timeout');
         }
-      } catch (err) {
+      } catch (err) { 
         console.error('Reject failed:', err);
       }
 currentSession = null;
