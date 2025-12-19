@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tracking History</title>
+
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.js"></script>
+
+  <style>
+    body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      background: #f6f7fb;
+    }
+
+    /* Header Styles */
+    .page-header {
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .back-btn {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #333;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: #f9f9f9;
+      transform: translateY(-1px);
+    }
+
+    /* Access Denied */
+    #accessDenied {
+      text-align: center;
+      margin-top: 50px;
+      display: none;
+    }
+
+    #accessDenied h2 {
+      color: #dc2626;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    #accessDenied p {
+      color: #6b7280;
+    }
+
+    /* --- GRID LAYOUT --- */
+    .tracking-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .tracking-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tracking-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* --- CARD STYLES --- */
+    .track-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .track-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .tc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #6b7280;
+      border-bottom: 1px dashed #f0f0f0;
+      padding-bottom: 10px;
+    }
+
+    .tc-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .tc-phone {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .tc-mem {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .badge-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .status-answered {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-missed {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .status-default {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .badge-type {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #e0e7ff;
+      color: #4f46e5;
+    }
+
+    .tc-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    audio {
+      width: 100%;
+      height: 32px;
+      border-radius: 20px;
+      background: #f1f5f9;
+    }
+
+    audio::-webkit-media-controls-panel {
+      background-color: #f1f5f9;
+    }
+
+    .tc-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .vbot-link {
+      color: #0d6efd;
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .vbot-link:hover {
+      text-decoration: underline;
+    }
+
+    .full-width-msg {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px dashed #e5e7eb;
+    }
+
+    .track-card {
+      position: relative;
+    }
+
+    .delete-btn {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 10;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .track-card:hover .delete-btn {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* ========== FILTER SECTION - LIGHT DESIGN ========== */
+    .filter-section {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto 24px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e5e7eb;
+    }
+
+    .filter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .filter-header h3 {
+      color: #374151;
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-header h3 i {
+      color: #6366f1;
+    }
+
+    .clear-filters-btn {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .clear-filters-btn:hover {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 1000px) {
+      .filter-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-item label {
+      color: #6b7280;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .filter-item label i {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    .filter-item input,
+    .filter-item select {
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: #f9fafb;
+      color: #374151;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .filter-item input:hover,
+    .filter-item select:hover {
+      border-color: #d1d5db;
+    }
+
+    .filter-item input:focus,
+    .filter-item select:focus {
+      background: #ffffff;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .filter-item input::placeholder {
+      color: #9ca3af;
+    }
+
+    .filter-item select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+      padding-right: 36px;
+    }
+
+    .filter-results {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f3f4f6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-results span {
+      color: #6b7280;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .filter-results span strong {
+      color: #6366f1;
+    }
+
+    .filter-item select.loading {
+      color: #9ca3af;
+      background-color: #f3f4f6;
+    }
+
+    .track-card.hidden {
+      display: none !important;
+    }
+
+    /* ========== PAGINATION STYLES ========== */
+    .pagination-section {
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px auto 40px;
+      padding: 15px 20px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .pagination-info {
+      color: #6b7280;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .pagination-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Number List */
+    .page-numbers-container {
+      display: flex;
+      gap: 5px;
+    }
+
+    .pagination-btn {
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #374151;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+
+    .pagination-btn.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+    }
+
+    .pagination-btn:disabled {
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
+      border-color: #f3f4f6;
+    }
+
+    .pagination-ellipsis {
+      display: flex;
+      align-items: center;
+      color: #9ca3af;
+      padding: 0 4px;
+    }
+
+    /* Go To Input Area */
+    .pagination-goto {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 15px;
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .pagination-goto span {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .pagination-goto input {
+      width: 50px;
+      height: 36px;
+      padding: 0 5px;
+      text-align: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .pagination-goto input:focus {
+      border-color: #6366f1;
+    }
+
+    .pagination-goto button {
+      height: 36px;
+      padding: 0 12px;
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination-goto button:hover {
+      background: #e5e7eb;
+      color: #111;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .pagination-section {
+        flex-direction: column;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .pagination-wrapper {
+        flex-direction: column;
+      }
+
+      .pagination-goto {
+        border-left: none;
+        padding-left: 0;
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+
+  <script src="./tracking.js" defer></script>
+</head>
+
+<body>
+
+  <div class="card" id="loginCard" style="display: none; margin-top: 50px;">
+    <div class="logo">Tracking Login</div>
+    <div class="subtitle">Dành riêng cho Admin & Super Admin</div>
+    <div class="field"><input id="email" type="email" placeholder="Email" required /></div>
+    <div class="field"><input id="password" type="password" placeholder="Mật khẩu" required /></div>
+    <button class="btn" id="loginBtn">Đăng nhập</button>
+    <div id="loginMessage" class="error" style="margin-top: 10px;"></div>
+  </div>
+
+  <div id="accessDenied">
+    <h2><i class="fa-solid fa-ban"></i> Access Denied</h2>
+    <p>Bạn không có quyền truy cập trang này.</p>
+    <a href="/" class="btn" style="display:inline-block; margin-top:20px; width:auto; background:#333;">Về trang chủ</a>
+  </div>
+
+  <div id="trackingContent" style="display: none; width: 100%;">
+
+    <div class="page-header">
+      <a href="/" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Quay lại Dashboard</a>
+      <div style="display:flex; align-items:center; gap:15px;">
+        <h2 style="margin:0; color:#333;">Lịch sử cuộc gọi</h2>
+        <button id="logoutBtn" class="back-btn" style="border-color:#fee2e2; color:#dc2626;">
+          <i class="fa-solid fa-power-off"></i> Logout
+        </button>
+      </div>
+    </div>
+
+    <div style="width: 100%; max-width: 1200px; margin: 0 auto 16px; text-align: right;">
+      <button class="refresh-btn" id="refreshBtn" title="Tải lại dữ liệu">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+    </div>
+
+    <!-- FILTER SECTION -->
+    <div class="filter-section" id="filterSection">
+      <div class="filter-header">
+        <h3><i class="fa-solid fa-sliders"></i> Bộ lọc</h3>
+        <button class="clear-filters-btn" id="clearFiltersBtn">
+          <i class="fa-solid fa-rotate-left"></i> Đặt lại
+        </button>
+      </div>
+
+      <div class="filter-grid">
+        <div class="filter-item">
+          <label><i class="fa-solid fa-user"></i> Tên / SĐT</label>
+          <select id="filterName" class="loading">
+            <option value="">Đang tải...</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label><i class="fa-solid fa-arrows-left-right"></i> Loại cuộc gọi</label>
+          <select id="filterDirection" class="loading">
+            <option value="">Đang tải...</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label><i class="fa-solid fa-circle-check"></i> Trạng thái</label>
+          <select id="filterStatus" class="loading">
+            <option value="">Đang tải...</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label><i class="fa-solid fa-clock"></i> Thời lượng</label>
+          <select id="filterDuration">
+            <option value="">Tất cả</option>
+            <option value="60">≥ 1 phút</option>
+            <option value="120">≥ 2 phút</option>
+            <option value="180">≥ 3 phút</option>
+            <option value="240">≥ 4 phút</option>
+            <option value="300">≥ 5 phút</option>
+            <option value="301">> 5 phút</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</label>
+          <input type="text" id="filterSearch" placeholder="Nhập từ khóa..." />
+        </div>
+      </div>
+
+      <div class="filter-results">
+        <span>Hiển thị <strong id="filterVisibleCount">0</strong> / <strong id="filterTotalCount">0</strong> kết
+          quả</span>
+      </div>
+    </div>
+
+    <div id="trackingGrid" class="tracking-grid">
+      <div class="full-width-msg">Đang tải dữ liệu...</div>
+    </div>
+
+   <div class="pagination-section" id="paginationSection" style="display: none;">
+      
+      <div class="pagination-info">
+        Hiển thị <span id="pageRangeDisplay" style="font-weight:700; color:#374151;">0-0</span> 
+        trong tổng <span id="totalItemsDisplay" style="font-weight:700; color:#374151;">0</span> kết quả
+      </div>
+      
+      <div class="pagination-wrapper">
+        
+        <div class="page-numbers-container">
+          <button class="pagination-btn" id="prevPageBtn" title="Trang trước">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          
+          <div id="pageNumbers" style="display:flex; gap:5px;"></div>
+          
+          <button class="pagination-btn" id="nextPageBtn" title="Trang sau">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="pagination-goto">
+          <span>Đến trang</span>
+          <input type="number" id="gotoPageInput" min="1" placeholder="#" />
+          <button id="gotoPageBtn">Đi</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

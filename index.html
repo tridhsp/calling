@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TANSINH Calling</title>
+
+  <link rel="icon" type="image/png" sizes="32x32"
+    href="https://files.tansinh.info/ads/tridhsp_1752750602636_ad_tridhsp_1752750602636.png" />
+  <link rel="icon" href="https://files.tansinh.info/ads/tridhsp_1752750602636_ad_tridhsp_1752750602636.png"
+    type="image/png" />
+  <link rel="shortcut icon" href="https://files.tansinh.info/ads/tridhsp_1752750602636_ad_tridhsp_1752750602636.png"
+    type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+  <!-- Speed up TLS/connection to your audio host -->
+  <!-- Establish the connection early (safe; no CORS fetch) -->
+  <link rel="preconnect" href="https://content.tansinh.info" crossorigin>
+
+
+
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Firebase SDK for Push Notifications -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js"></script>
+
+  <!-- Supabase UMD build -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.js" defer></script>
+
+  <!-- Main application script -->
+  <script src="./script.js" defer></script>
+
+
+</head>
+
+<body>
+  <div id="topBadges" class="top-badges-container" style="display: none;">
+
+    <span class="group-label">Cần cập nhật SĐT:</span>
+
+    <div id="topBadgeStudent" class="compact-badge badge-alert-red">
+      <i class="fa-solid fa-user-graduate"></i>
+      <span>HV:</span>
+      <strong id="topCountStudent">0</strong>
+    </div>
+
+    <div id="topBadgeTeacher" class="compact-badge badge-alert-yellow">
+      <i class="fa-solid fa-chalkboard-user"></i>
+      <span>GV:</span>
+      <strong id="topCountTeacher">0</strong>
+    </div>
+
+  </div>
+  <!-- Connection Status Indicator -->
+  <div id="connectionStatus" class="connection-status" style="display: none;">
+    <div class="status-item" id="firebaseStatus">
+      <span class="status-dot red"></span>
+      <span class="status-label">Firebase</span>
+    </div>
+    <div class="status-item" id="keepAliveStatus">
+      <span class="status-dot red"></span>
+      <span class="status-label">Keep-Alive</span>
+    </div>
+    <div class="status-item" id="vbotStatus">
+      <span class="status-dot red"></span>
+      <span class="status-label">VBot</span>
+    </div>
+  </div>
+
+  <!-- Error Section - Shows when app needs refresh -->
+  <div id="appErrorSection" style="
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-radius: 16px;
+    padding: 16px 24px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+    z-index: 99990;
+    font-family: 'Inter', Arial, sans-serif;
+  ">
+    <div style="display: flex; align-items: flex-start; gap: 14px;">
+      <div style="
+        width: 42px;
+        height: 42px;
+        background: #fee2e2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      ">
+        <i class="fa-solid fa-exclamation-circle" style="color: #dc2626; font-size: 20px;"></i>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; color: #991b1b; font-size: 15px; margin-bottom: 4px;">
+          Có lỗi xảy ra
+        </div>
+        <div id="appErrorMessage" style="font-size: 13px; color: #b91c1c; line-height: 1.5; margin-bottom: 12px;">
+          Ứng dụng gặp sự cố. Vui lòng tải lại trang để tiếp tục sử dụng.
+        </div>
+        <button onclick="location.reload()" style="
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+          transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)';"
+          onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)';">
+          <i class="fa-solid fa-rotate-right"></i>
+          Tải lại trang
+        </button>
+      </div>
+      <button onclick="document.getElementById('appErrorSection').style.display='none'" style="
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px;
+        line-height: 1;
+      " title="Đóng">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+ 
+  <div class="card" id="loginCard">
+
+    <div class="logo">TANSINH Calling</div>
+    <div class="subtitle">Đăng nhập bằng email &amp; mật khẩu của bạn</div>
+
+    <div class="field">
+      <input id="email" type="email" autocomplete="username" placeholder="Email" required />
+    </div>
+
+    <div class="field">
+      <input id="password" type="password" autocomplete="current-password" placeholder="Mật khẩu" required />
+      <button class="toggle-password" id="togglePwd" aria-label="Hiện/ẩn mật khẩu">👁️</button>
+    </div>
+
+    <button class="btn" id="login">Đăng nhập</button>
+    <div id="message" aria-live="polite"></div>
+
+    <!-- Important Reminder -->
+    <div style="
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-radius: 12px;
+      border-left: 4px solid #f59e0b;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    ">
+      <i class="fa-solid fa-bell" style="color: #d97706; font-size: 18px; margin-top: 2px;"></i>
+      <div style="font-size: 13px; color: #92400e; line-height: 1.5;">
+        <strong style="display: block; margin-bottom: 4px; color: #78350f;">Lưu ý quan trọng!</strong>
+        Sau khi đăng nhập, hãy nhấn nút <strong>"Bắt Đầu"</strong> để có thể nhận và thực hiện cuộc gọi.
+      </div>
+    </div>
+  </div>
+
+  <div id="mainContent" class="table-container" style="display: none;">
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">Tổng hồ sơ</span>
+          <strong id="statTotal" class="stat-value">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card purple">
+        <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">Chỉ có SĐT HV</span>
+          <strong id="statOnlyStudent" class="stat-value">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card orange">
+        <div class="stat-icon"><i class="fa-solid fa-user-tie"></i></div>
+
+        <div class="stat-info">
+          <span class="stat-label">Thiếu SĐT Cha</span>
+          <strong id="statNoDad" class="stat-value">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card pink">
+        <div class="stat-icon"><i class="fa-solid fa-person-dress-burst"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">Thiếu SĐT Mẹ</span>
+          <strong id="statNoMom" class="stat-value">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card red">
+        <div class="stat-icon"><i class="fa-solid fa-phone-slash"></i></div>
+        <div class="stat-info">
+          <span class="stat-label">HV không có SĐT</span>
+          <strong id="statNoStudentPhone" class="stat-value">0</strong>
+        </div>
+      </div>
+
+    </div>
+    <div class="table-header">
+      <h2>Danh sách liên lạc</h2>
+      <button class="refresh-btn" onclick="loadDashboardData()"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+
+    <div class="table-scroll">
+      <table id="phoneTable">
+        <thead>
+          <tr>
+            <th>Tên HV</th>
+            <th>SĐT HV</th>
+            <th>SĐT Cha</th>
+            <th>SĐT Mẹ</th>
+            <th>SĐT Chị</th>
+            <th>SĐT Bà</th>
+            <th>SĐT Ông</th>
+            <th style="width: 100px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <button type="button" id="openVBotWebCallBtn" style="display:none;"></button>
+
+
+  <!-- Main Search Section -->
+  <div id="searchSection" class="search-section" style="display: none;">
+    <div class="search-card">
+      <div class="search-greeting">
+        <i class="fa-solid fa-phone-volume"></i>
+        <h1>Hôm nay bạn muốn gọi cho ai?</h1>
+        <p>Nhập email học viên để tìm kiếm</p>
+      </div>
+
+      <div class="search-input-wrapper">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="mainSearchInput" placeholder="Ví dụ: nguyenvana@..." autocomplete="off" />
+        <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <ul id="mainSuggestionList" class="main-suggestions"></ul>
+
+      <!-- TODAY'S CALL HISTORY SECTION (Moved to top) -->
+      <div id="todayCallsSection" class="today-calls-section" style="display: none;">
+        <div class="today-calls-header">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Lịch sử gọi hôm nay</span>
+        </div>
+        <div id="todayCallsGrid" class="today-calls-grid"></div>
+      </div>
+
+      <!-- Selected Student Card (hidden until selection) -->
+      <div id="selectedStudentCard" class="selected-student-card" style="display: none;">
+        <div class="student-info">
+          <div class="student-avatar">
+            <i class="fa-solid fa-user-graduate"></i>
+          </div>
+          <div class="student-details">
+            <h3 id="selectedStudentName">--</h3>
+            <p id="selectedStudentEmail">--</p>
+          </div>
+        </div>
+        <div id="studentPhoneButtons" class="phone-buttons-grid">
+        </div>
+
+        <div id="cardMessageDisplay"
+          style="color: #ef4444; text-align: center; margin-top: 12px; min-height: 20px; font-weight: 500; font-size: 0.95rem;">
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <button id="addBtn" class="fab-btn" aria-label="Add Task">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <button id="trackingBtn" type="button" class="fab-btn tracking-btn-left"
+    onclick="window.location.href='tracking.html'" aria-label="Go to Tracking" style="display: none;">
+    <i class="fa-solid fa-chart-line"></i>
+  </button>
+
+  <button id="grantBtn" class="fab-btn grant-btn-right" aria-label="Grant Access">
+    <i class="fa-solid fa-user-shield"></i>
+  </button>
+
+  <button id="listBtn" class="fab-btn list-btn-right" aria-label="View List">
+    <i class="fa-solid fa-list-ul"></i>
+  </button>
+
+  <button id="priorityBtn" type="button" class="fab-btn priority-btn-left"
+    onclick="window.location.href='priority.html'" aria-label="Priority Settings" style="display: none;">
+    <i class="fa-solid fa-crown"></i>
+  </button>
+
+  <div id="taskModal" class="modal-overlay">
+    <div class="modal-content modern-modal">
+      <div class="modal-header">
+        <div class="icon-box"><i class="fa-solid fa-user-plus"></i></div>
+        <h3>Thêm Hồ Sơ Mới</h3>
+        <p>Tìm học viên bằng email và thêm số điện thoại</p>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tìm Học Viên (Email)</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="taskTitle" placeholder="Nhập email để tìm..." autocomplete="off" />
+          </div>
+          <ul id="suggestionList" class="suggestions-list"></ul>
+        </div>
+
+        <div id="userNameDisplay" class="student-selected-preview">
+          <div class="avatar-small"><i class="fa-regular fa-user"></i></div>
+          <span>Chưa chọn học viên...</span>
+        </div>
+
+        <div class="form-group">
+          <div class="phone-section-header">
+            <label>Danh sách số điện thoại</label>
+            <button id="openPhoneModalBtn" class="btn-icon-small" title="Thêm số">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+          <div id="phoneListDisplay" class="phone-list-grid"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="closeModal" class="btn-secondary">Hủy bỏ</button>
+        <button id="saveTask" class="btn-primary">Lưu Hồ Sơ</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="phoneModal" class="modal-overlay" style="z-index: 2100;">
+    <div class="modal-content modern-modal compact">
+      <div class="modal-header">
+        <h3>Thêm Số Điện Thoại</h3>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mối quan hệ</label>
+          <div class="select-wrapper">
+            <select id="phoneType">
+              <option value="SĐT HV">Học viên</option>
+              <option value="SĐT Cha">Cha</option>
+              <option value="SĐT Mẹ">Mẹ</option>
+              <option value="SĐT Chị">Chị</option>
+              <option value="SĐT Bà">Bà</option>
+              <option value="SĐT Ông">Ông</option>
+            </select>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Số điện thoại</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-phone"></i>
+            <input type="tel" id="phoneNumber" placeholder="Ví dụ: 0912345678" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelPhone" class="btn-secondary">Hủy</button>
+        <button id="savePhone" class="btn-primary">Thêm</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+
+
+    // Release token when page closes
+    window.addEventListener('beforeunload', () => {
+      if (window.VBOT_SESSION_ID) {
+        navigator.sendBeacon('/.netlify/functions/vbot-token-manager?action=release&session_id=' + window.VBOT_SESSION_ID);
+      }
+    });
+
+
+
+    // Generate unique tab ID for leader election
+    window.VBOT_TAB_ID = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+    // EARLY LEADER ELECTION - Check if this tab should initialize VBot
+    (function () {
+      const LEADER_KEY = 'vbot_leader_tab';
+      const LEADER_HEARTBEAT_KEY = 'vbot_leader_heartbeat';
+      const LEADER_TIMEOUT = 5000;
+      const now = Date.now();
+      const lastHeartbeat = parseInt(localStorage.getItem(LEADER_HEARTBEAT_KEY) || '0');
+      const currentLeader = localStorage.getItem(LEADER_KEY);
+
+      // Check if we should be the leader
+      if (!currentLeader || (now - lastHeartbeat > LEADER_TIMEOUT)) {
+        // No leader or leader is dead - become leader
+        localStorage.setItem(LEADER_KEY, window.VBOT_TAB_ID);
+        localStorage.setItem(LEADER_HEARTBEAT_KEY, now.toString());
+        window.VBOT_IS_LEADER = true;
+        console.log('VBot: This tab is LEADER (early election)');
+      } else if (currentLeader === window.VBOT_TAB_ID) {
+        // This tab is already leader
+        window.VBOT_IS_LEADER = true;
+        console.log('VBot: This tab is already LEADER');
+      } else {
+        // Another tab is leader
+        window.VBOT_IS_LEADER = false;
+        console.log('VBot: Another tab is LEADER - this tab will NOT init VBot');
+      }
+    })();
+
+    // Generate session ID and request initial token (without email)
+    // Token will be RE-requested AFTER login with user email for priority check
+    window.VBOT_SESSION_ID = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    window.vbotTokenLoaded = false;
+    window.VBOT_KICKED = false;
+    window.VBOT_USER_EMAIL = null;
+
+    // Request initial token immediately (without email - priority will be checked later)
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', '/.netlify/functions/vbot-token-manager?action=request&session_id=' + window.VBOT_SESSION_ID, false);
+      xhr.send();
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success && data.token) {
+          window.VBOT_ACCESS_TOKEN = data.token;
+          window.VBOT_SLOT = data.slot;
+          window.vbotTokenLoaded = true;
+          console.log('VBot: Initial token loaded from slot', data.slot);
+        }
+      }
+    } catch (e) {
+      console.error('VBot: Initial token fetch failed', e);
+    }
+
+    // Function to request token with user email (called after login)
+    window.requestVBotToken = function (userEmail) {
+      window.VBOT_USER_EMAIL = userEmail;
+      try {
+        const xhr = new XMLHttpRequest();
+        const url = '/.netlify/functions/vbot-token-manager?action=request&session_id=' + window.VBOT_SESSION_ID + '&user_email=' + encodeURIComponent(userEmail || '');
+        xhr.open('GET', url, false);
+        xhr.send();
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          if (data.success && data.token) {
+            window.VBOT_ACCESS_TOKEN = data.token;
+            window.VBOT_SLOT = data.slot;
+            window.VBOT_IS_PRIORITY = data.is_priority || false;
+            window.VBOT_OUTBOUND_ONLY = data.outbound_only || false;
+            window.vbotTokenLoaded = true;
+            window.VBOT_KICKED = false;
+            console.log('VBot: Token loaded from slot', data.slot, data.is_priority ? '(PRIORITY)' : '', data.outbound_only ? '(OUTBOUND ONLY)' : '');
+            // Show which slot this user got
+            setTimeout(() => {
+              if (data.outbound_only) {
+                showOutboundOnlyNotification(data.message);
+              } else {
+                showSlotIndicator(data.slot, data.message, data.is_priority);
+              }
+            }, 500);
+            return true;
+          } else if (data.no_slot) {
+            // No slot available
+            console.warn('VBot: No slot available -', data.message);
+            window.vbotTokenLoaded = false;
+            showNoSlotNotification(data.message, data.is_priority);
+            return false;
+          } else {
+            console.error('VBot: Token manager failed:', data.message);
+            window.vbotTokenLoaded = false;
+            return false;
+          }
+        } else {
+          console.error('VBot: Token fetch returned status', xhr.status);
+          window.vbotTokenLoaded = false;
+          return false;
+        }
+      } catch (e) {
+        console.error('VBot: Token fetch failed', e);
+        window.vbotTokenLoaded = false;
+        return false;
+      }
+    };
+
+    // Function to show slot indicator
+    function showSlotIndicator(slot, message, isPriority) {
+      const indicator = document.createElement('div');
+      indicator.id = 'vbot-slot-indicator';
+      const bgColor = isPriority
+        ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+        : 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+      const shadowColor = isPriority
+        ? 'rgba(139, 92, 246, 0.3)'
+        : 'rgba(16, 185, 129, 0.3)';
+      indicator.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${bgColor};
+        color: white;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-family: 'Inter', Arial, sans-serif;
+        z-index: 9999;
+        box-shadow: 0 4px 15px ${shadowColor};
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      `;
+      indicator.innerHTML = `
+        <span style="font-size: 16px;">${isPriority ? '👑' : '📞'}</span>
+        <span>Kênh ${slot} ${isPriority ? '- Ưu tiên' : '- Đang hoạt động'}</span>
+      `;
+      document.body.appendChild(indicator);
+
+      // Fade out after 5 seconds
+      setTimeout(() => {
+        indicator.style.transition = 'opacity 0.5s';
+        indicator.style.opacity = '0';
+        setTimeout(() => indicator.remove(), 500);
+      }, 5000);
+    }
+
+    // Function to show no slot notification
+    function showNoSlotNotification(message, isPriority) {
+      const notification = document.createElement('div');
+      notification.id = 'vbot-no-slot-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          font-family: 'Inter', Arial, sans-serif;
+          max-width: 90%;
+        ">
+          <div style="font-size: 24px;">🚫</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Không thể nhận cuộc gọi</div>
+            <div style="font-size: 13px; opacity: 0.9;">${message}</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+
+      // Remove after 10 seconds
+      setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 500);
+      }, 10000);
+    }
+
+    // Function to show outbound-only notification (user can call but not receive)
+    function showOutboundOnlyNotification(message) {
+      const notification = document.createElement('div');
+      notification.id = 'vbot-outbound-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          font-family: 'Inter', Arial, sans-serif;
+          max-width: 90%;
+        ">
+          <div style="font-size: 24px;">📞</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Chế độ gọi đi</div>
+            <div style="font-size: 13px; opacity: 0.9;">${message}</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+
+      // Remove after 8 seconds
+      setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 500);
+      }, 8000);
+    }
+
+
+    // === VBOT RETRY NOTIFICATIONS ===
+    function showVBotRetryNotification(attempt) {
+      // Remove existing notification first
+      hideVBotRetryNotification();
+
+      const notification = document.createElement('div');
+      notification.id = 'vbotRetryNotification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #78350f;
+        padding: 12px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+        z-index: 99999;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      `;
+      notification.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Đang kết nối lại VBot (${attempt}/3)...</span>
+      `;
+      document.body.appendChild(notification);
+    }
+
+    function hideVBotRetryNotification() {
+      const existing = document.getElementById('vbotRetryNotification');
+      if (existing) existing.remove();
+
+      const failed = document.getElementById('vbotFailedNotification');
+      if (failed) failed.remove();
+    }
+
+    function showVBotFailedNotification() {
+      hideVBotRetryNotification();
+
+      const notification = document.createElement('div');
+      notification.id = 'vbotFailedNotification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 14px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        z-index: 99999;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      `;
+      notification.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Không thể kết nối VBot</span>
+        <button onclick="location.reload()" style="
+          background: white;
+          color: #dc2626;
+          border: none;
+          padding: 6px 14px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          font-size: 13px;
+        ">Tải lại</button>
+      `;
+      document.body.appendChild(notification);
+    }
+
+    // Make functions globally accessible
+    window.showVBotRetryNotification = showVBotRetryNotification;
+    window.hideVBotRetryNotification = hideVBotRetryNotification;
+    window.showVBotFailedNotification = showVBotFailedNotification;
+
+
+  </script>
+  <script type="module">
+    import { VBotWebCall } from "https://plugin.vbot.vn/v1.0/vbot-web-plugin.js";
+
+    // Initialize VBot on ALL tabs (removed leader check for multi-device ringing)
+    if (!window.VBOT_ACCESS_TOKEN) {
+      console.error('VBot: No token available');
+    } else {
+      var setting = {
+        right: -99999,
+        bottom: -99999,
+        access_token: window.VBOT_ACCESS_TOKEN
+      };
+
+      VBotWebCall.init(setting);
+      window.VBotWebCall = VBotWebCall;
+      console.log('VBot: Init called with token');
+
+      const checkClient = setInterval(() => {
+        if (VBotWebCall.client) {
+          clearInterval(checkClient);
+          window.vbotReady = true;
+          window.vbotEarlyInvites = [];
+          window.vbotMainListenerReady = false;  // Explicitly initialize
+          console.log('VBot: Client ready!');
+
+          VBotWebCall.client.on('invite', (session) => {
+            // If main handler is ready, let it handle (don't double-process)
+            if (window.vbotMainListenerReady) {
+              console.log('VBot: Main listener active, skipping early capture');
+              return;
+            }
+
+            // REMOVED: Leader check - ALL devices should ring for incoming calls
+            // Each device will process invites independently
+
+            console.log('VBot: Early invite captured before main listener ready');
+
+            // Store for later processing
+            window.vbotEarlyInvites.push({
+              session: session,
+              timestamp: Date.now()
+            });
+
+            // CRITICAL: Try to play ringtone immediately even before login
+            // This ensures user hears the call even if they haven't logged in yet
+            if (typeof window.playEarlyRingtone === 'function') {
+              window.playEarlyRingtone();
+            }
+          });
+
+          // Connect immediately so we can receive calls
+          // DON'T connect here - let script.js handle it based on leader election
+          // This prevents multiple tabs from fighting for SIP registration
+          console.log('VBot: Client ready, waiting for leader election before connecting');
+        }
+      }, 200);
+
+      setTimeout(() => {
+        clearInterval(checkClient);
+        if (!window.vbotReady) {
+          console.error('VBot: Client failed after 10s - will retry');
+
+          // AUTO-RETRY: Attempt to reinitialize VBot
+          window.vbotRetryCount = (window.vbotRetryCount || 0) + 1;
+
+          if (window.vbotRetryCount <= 3) {
+            console.log('VBot: Auto-retry attempt ' + window.vbotRetryCount + '/3');
+
+            // Show retry notification to user
+            showVBotRetryNotification(window.vbotRetryCount);
+
+            // Wait 2 seconds then retry initialization
+            setTimeout(() => {
+              try {
+                VBotWebCall.init(setting);
+                window.VBotWebCall = VBotWebCall;
+                console.log('VBot: Retry init called');
+
+                // Check for client again
+                const retryCheck = setInterval(() => {
+                  if (VBotWebCall.client) {
+                    clearInterval(retryCheck);
+                    window.vbotReady = true;
+                    window.vbotEarlyInvites = window.vbotEarlyInvites || [];
+                    window.vbotMainListenerReady = false;
+                    console.log('VBot: Client ready after retry!');
+                    hideVBotRetryNotification();
+
+                    // Setup early invite listener
+                    VBotWebCall.client.on('invite', (session) => {
+                      if (window.vbotMainListenerReady) return;
+                      console.log('VBot: Early invite captured (after retry)');
+                      window.vbotEarlyInvites.push({
+                        session: session,
+                        timestamp: Date.now()
+                      });
+                      if (typeof window.playEarlyRingtone === 'function') {
+                        window.playEarlyRingtone();
+                      }
+                    });
+                  }
+                }, 200);
+
+                // Timeout for retry check
+                setTimeout(() => {
+                  clearInterval(retryCheck);
+                  if (!window.vbotReady && window.vbotRetryCount < 3) {
+                    // Trigger another retry by reloading
+                    console.error('VBot: Retry ' + window.vbotRetryCount + ' failed');
+                  } else if (!window.vbotReady) {
+                    showVBotFailedNotification();
+                  }
+                }, 8000);
+
+              } catch (e) {
+                console.error('VBot: Retry init error:', e);
+              }
+            }, 2000);
+
+          } else {
+            // Max retries reached - show reload button
+            showVBotFailedNotification();
+          }
+        }
+      }, 10000);
+    }
+
+
+    // Track consecutive heartbeat failures for automatic recovery
+    window.VBOT_HEARTBEAT_FAILURES = 0;
+    const MAX_HEARTBEAT_FAILURES = 3;
+
+    // Heartbeat to keep token slot alive + handle slot changes
+    setInterval(() => {
+      if (window.VBOT_SESSION_ID && !window.VBOT_KICKED) {
+        const emailParam = window.VBOT_USER_EMAIL ? '&user_email=' + encodeURIComponent(window.VBOT_USER_EMAIL) : '';
+
+        if (window.vbotTokenLoaded && !window.VBOT_OUTBOUND_ONLY) {
+          fetch('/.netlify/functions/vbot-token-manager?action=heartbeat&session_id=' + window.VBOT_SESSION_ID + emailParam)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Heartbeat failed with status ' + response.status);
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (data.downgraded) {
+                // Downgraded to outbound-only (NOT kicked completely)
+                console.warn('VBot: Downgraded to outbound-only mode');
+                window.VBOT_OUTBOUND_ONLY = true;
+                window.VBOT_SLOT = 0;
+                window.VBOT_ACCESS_TOKEN = data.token; // Update token if provided
+                // Keep vbotTokenLoaded = true so user can still make calls
+                showDowngradedNotification(data.message);
+
+                // NEW: Show persistent warning so user knows they can't receive calls
+                if (typeof window.showPersistentOutboundWarning === 'function') {
+                  window.showPersistentOutboundWarning();
+                }
+              } else if (data.success) {
+                // Heartbeat successful - update priority status if changed
+                if (data.is_priority !== undefined && data.is_priority !== window.VBOT_IS_PRIORITY) {
+                  console.log('VBot: Priority status changed to', data.is_priority);
+                  window.VBOT_IS_PRIORITY = data.is_priority;
+                }
+              }
+            })
+            .catch((error) => {
+              console.warn('Heartbeat error:', error.message);
+              window.VBOT_HEARTBEAT_FAILURES = (window.VBOT_HEARTBEAT_FAILURES || 0) + 1;
+
+              if (window.VBOT_HEARTBEAT_FAILURES >= MAX_HEARTBEAT_FAILURES) {
+                console.error('VBot: Too many heartbeat failures, attempting recovery...');
+                window.VBOT_HEARTBEAT_FAILURES = 0;
+
+                // Try to re-request token
+                fetch('/.netlify/functions/vbot-token-manager?action=request&session_id=' + window.VBOT_SESSION_ID + emailParam)
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.success && data.token) {
+                      console.log('VBot: Recovery successful, got slot', data.slot);
+                      window.VBOT_ACCESS_TOKEN = data.token;
+                      window.VBOT_SLOT = data.slot;
+                      window.VBOT_OUTBOUND_ONLY = data.outbound_only || false;
+                      window.VBOT_IS_PRIORITY = data.is_priority || false;
+                    }
+                  })
+                  .catch(() => {
+                    console.error('VBot: Recovery failed');
+                  });
+              }
+            });
+        }
+
+        // CASE 2: User is in outbound-only mode - try to get a full slot
+        else if (window.VBOT_OUTBOUND_ONLY) {
+          fetch('/.netlify/functions/vbot-token-manager?action=request&session_id=' + window.VBOT_SESSION_ID + emailParam)
+            .then(r => r.json())
+            .then(data => {
+              if (data.success && data.slot > 0 && !data.outbound_only) {
+                // Got a full slot! Upgrade!
+                console.log('VBot: Upgraded to full slot', data.slot);
+                window.VBOT_SLOT = data.slot;
+                window.VBOT_OUTBOUND_ONLY = false;
+                window.VBOT_IS_PRIORITY = data.is_priority || false;
+                showUpgradedNotification(data.slot, data.is_priority);
+                // Reload to reinitialize VBot with proper slot
+                setTimeout(() => location.reload(), 2000);
+              }
+            })
+            .catch(() => { });
+        }
+
+        // CASE 3: User has no token at all - try to get one
+        else if (!window.vbotTokenLoaded) {
+          fetch('/.netlify/functions/vbot-token-manager?action=request&session_id=' + window.VBOT_SESSION_ID + emailParam)
+            .then(r => r.json())
+            .then(data => {
+              if (data.success && data.token) {
+                console.log('VBot: Got a token!', data.slot, data.outbound_only ? '(outbound only)' : '');
+                window.VBOT_ACCESS_TOKEN = data.token;
+                window.VBOT_SLOT = data.slot;
+                window.VBOT_OUTBOUND_ONLY = data.outbound_only || false;
+                window.VBOT_IS_PRIORITY = data.is_priority || false;
+                window.vbotTokenLoaded = true;
+
+                if (data.outbound_only) {
+                  showOutboundOnlyNotification(data.message);
+                  // NEW: Also show persistent warning
+                  if (typeof window.showPersistentOutboundWarning === 'function') {
+                    setTimeout(() => window.showPersistentOutboundWarning(), 3000);
+                  }
+                } else {
+                  showUpgradedNotification(data.slot, data.is_priority);
+                }
+
+                // Reload to initialize VBot
+                setTimeout(() => location.reload(), 2000);
+              }
+            })
+            .catch(() => { });
+        }
+      }
+    }, 15000); // Every 15 seconds
+
+    // Function to show downgraded notification
+    function showDowngradedNotification(message) {
+      const existing = document.getElementById('vbot-downgraded-notification');
+      if (existing) existing.remove();
+
+      const notification = document.createElement('div');
+      notification.id = 'vbot-downgraded-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          font-family: 'Inter', Arial, sans-serif;
+          max-width: 90%;
+        ">
+          <div style="font-size: 24px;">📞</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Chế độ gọi đi</div>
+            <div style="font-size: 13px; opacity: 0.9;">${message || 'Bạn vẫn có thể gọi đi bình thường.'}</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 500);
+      }, 8000);
+    }
+
+    // Function to show upgraded notification
+    function showUpgradedNotification(slot, isPriority) {
+      const notification = document.createElement('div');
+      notification.id = 'vbot-upgraded-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          font-family: 'Inter', Arial, sans-serif;
+          max-width: 90%;
+        ">
+          <div style="font-size: 24px;">✅</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Đã kết nối kênh ${slot}${isPriority ? ' (Ưu tiên)' : ''}</div>
+            <div style="font-size: 13px; opacity: 0.9;">Bạn có thể nhận cuộc gọi đến. Đang tải lại...</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+    }
+    // Function to show kicked notification
+    function showKickedNotification() {
+      // Remove existing notification if any
+      const existing = document.getElementById('vbot-kicked-notification');
+      if (existing) existing.remove();
+
+      const notification = document.createElement('div');
+      notification.id = 'vbot-kicked-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          font-family: 'Inter', Arial, sans-serif;
+          max-width: 90%;
+        ">
+          <div style="font-size: 24px;">⚠️</div>
+          <div>
+            <div style="font-weight: 600; margin-bottom: 3px;">Phiên làm việc đã hết</div>
+            <div style="font-size: 13px; opacity: 0.9;">Có giáo viên khác đã đăng nhập. Nhấn để kết nối lại.</div>
+          </div>
+          <button onclick="location.reload()" style="
+            background: white;
+            color: #ff6b00;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+          ">Kết nối lại</button>
+        </div>
+      `;
+      document.body.appendChild(notification);
+    }
+
+
+  </script>
+
+  <div id="missingModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 450px; max-height: 80vh; display: flex; flex-direction: column;">
+      <h3>Học viên chưa có SĐT</h3>
+      <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+        Các email dưới đây có trong bảng <strong>danh_sach_hv</strong> nhưng chưa được thêm vào hệ thống liên lạc.
+      </p>
+
+      <ul id="missingList" class="suggestions-list"
+        style="position: relative; display: block; border: 1px solid #eee; overflow-y: auto; flex: 1;">
+      </ul>
+
+      <div style="text-align: right; margin-top: 15px;">
+        <button id="closeMissingModal" class="btn" style="background: #f3f4f6; color: #333; width: auto;">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
+
+<div id="editStudentModal" class="modal-overlay" style="z-index: 2200;">
+  <div class="modal-content">
+    <h3>Cập nhật thông tin</h3>
+    <input type="hidden" id="editRowId">
+
+    <div class="field">
+      <label style="font-weight:bold;">Học viên</label>
+      <input id="editStudentName" disabled style="background:#f3f4f6; color:#555;">
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT HV</label>
+        <input id="editHV" type="tel">
+      </div>
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT Cha</label>
+        <input id="editCha" type="tel">
+      </div>
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT Mẹ</label>
+        <input id="editMe" type="tel">
+      </div>
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT Chị</label>
+        <input id="editChi" type="tel">
+      </div>
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT Bà</label>
+        <input id="editBa" type="tel">
+      </div>
+      <div class="field">
+        <label style="font-size:0.85rem;">SĐT Ông</label>
+        <input id="editOng" type="tel">
+      </div>
+    </div>
+
+    <div style="text-align: right;">
+      <button id="cancelEditBtn" class="btn"
+        style="background:#f3f4f6; color:#333; width:auto; margin-right:8px; border:1px solid #ccc;">Hủy</button>
+      <button id="saveEditBtn" class="btn" style="width:auto;">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="grantModal" class="modal-overlay" style="z-index: 2300;">
+  <div class="modal-content" style="max-width: 400px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div
+        style="width: 50px; height: 50px; background: #fffbeb; color: #d97706; border-radius: 50%; display: inline-grid; place-items: center; font-size: 1.5rem; margin-bottom: 12px;">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <h3 style="margin: 0; color: #111;">Cấp thêm lượt gọi</h3>
+      <p style="color: #666; font-size: 0.9rem; margin-top: 4px;">Nhập email để cấp thêm quyền gọi</p>
+    </div>
+
+    <div class="field">
+      <label style="display:block; margin-bottom:8px; font-weight:500;">Email HV/ GV</label>
+      <input type="email" id="grantEmailInput" placeholder="example@email.com" autocomplete="off" />
+    </div>
+
+    <div style="text-align: right; margin-top: 24px; display: flex; gap: 10px;">
+      <button id="closeGrantModal" class="btn"
+        style="background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; flex: 1;">
+        Hủy
+      </button>
+      <button id="submitGrantBtn" class="btn"
+        style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+        Xác nhận
+      </button>
+    </div>
+  </div>
+</div>

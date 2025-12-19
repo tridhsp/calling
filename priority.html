@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quản Lý Ưu Tiên Cuộc Gọi - TANSINH</title>
+  <link rel="icon" type="image/png" sizes="32x32"
+    href="https://files.tansinh.info/ads/tridhsp_1752750602636_ad_tridhsp_1752750602636.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0e5ec 0%, #d4dbe6 50%, #f0e6f6 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #e0e5ec 0%, #d4dbe6 50%, #f0e6f6 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loading-screen .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .loading-screen p {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Main Content - Hidden by default */
+    .main-content {
+      display: none;
+    }
+
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .header h1 {
+      font-size: 24px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header h1 i {
+      color: #667eea;
+    }
+    .header p {
+      color: #6b7280;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Stats Cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .stat-card.purple { border-left: 4px solid #8b5cf6; }
+    .stat-card.green { border-left: 4px solid #10b981; }
+    .stat-card.blue { border-left: 4px solid #3b82f6; }
+    .stat-label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    /* Add Form */
+    .add-form {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .add-form h3 {
+      font-size: 16px;
+      color: #374151;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .add-form h3 i { color: #10b981; }
+    .form-row {
+      display: flex;
+      gap: 12px;
+    }
+    .form-row input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-row input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .form-row button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .form-row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Lists Container */
+    .lists-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .lists-container { grid-template-columns: 1fr; }
+    }
+
+    /* List Card */
+    .list-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .list-card h3 {
+      font-size: 16px;
+      color: #374151;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .list-card h3 i.purple { color: #8b5cf6; }
+    .list-card h3 i.blue { color: #3b82f6; }
+
+    /* Priority List */
+    .priority-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .priority-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      transition: background 0.2s;
+    }
+    .priority-item:hover {
+      background: #f3f4f6;
+    }
+    .priority-item .email {
+      font-size: 14px;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .priority-item .email i {
+      color: #8b5cf6;
+    }
+    .priority-item .remove-btn {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .priority-item .remove-btn:hover {
+      background: #fecaca;
+    }
+
+    /* Session List */
+    .session-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .session-item.active { background: #ecfdf5; }
+    .session-item.inactive { background: #fef2f2; opacity: 0.7; }
+    .session-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .slot-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+      background: #6b7280;
+    }
+    .session-item.active .slot-badge { background: #10b981; }
+    .session-email {
+      font-size: 14px;
+      color: #374151;
+    }
+    .session-email.empty {
+      color: #9ca3af;
+      font-style: italic;
+    }
+    .priority-badge {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .session-item.active .status-dot { background: #10b981; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+    }
+    .empty-state i {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+    .loading i {
+      font-size: 24px;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1f2937;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success i { color: #10b981; }
+    .toast.error { background: #dc2626; }
+    .toast.error i { color: white; }
+
+    /* User Info */
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .user-info i { color: #667eea; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p>Đang kiểm tra quyền truy cập...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div id="mainContent" class="main-content">
+    <div class="container">
+      <a href="/" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Quay lại trang chính
+      </a>
+
+      <div class="header">
+        <h1><i class="fa-solid fa-crown"></i> Quản Lý Ưu Tiên Cuộc Gọi</h1>
+        <p>Thêm email vào danh sách ưu tiên để nhận quyền gọi trước khi có slot trống</p>
+        <div class="user-info" id="userInfo">
+          <i class="fa-solid fa-user-shield"></i>
+          <span>Đang đăng nhập: <strong id="currentUserDisplay">...</strong></span>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card purple">
+          <div class="stat-label">Email ưu tiên</div>
+          <div class="stat-value" id="statPriority">0</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Đang online</div>
+          <div class="stat-value" id="statOnline">0</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Tổng slot</div>
+          <div class="stat-value" id="statSlots">0</div>
+        </div>
+      </div>
+
+      <!-- Add Form -->
+      <div class="add-form">
+        <h3><i class="fa-solid fa-plus-circle"></i> Thêm Email Ưu Tiên</h3>
+        <div class="form-row">
+          <input type="email" id="emailInput" placeholder="Nhập email cần ưu tiên..." />
+          <button id="addBtn">
+            <i class="fa-solid fa-plus"></i>
+            Thêm
+          </button>
+        </div>
+      </div>
+
+      <!-- Lists -->
+      <div class="lists-container">
+        <!-- Priority List -->
+        <div class="list-card">
+          <h3><i class="fa-solid fa-star purple"></i> Danh Sách Ưu Tiên</h3>
+          <div id="priorityList" class="priority-list">
+            <div class="loading"><i class="fa-solid fa-spinner"></i></div>
+          </div>
+        </div>
+
+        <!-- Active Sessions -->
+        <div class="list-card">
+          <h3><i class="fa-solid fa-phone blue"></i> Kênh Đang Hoạt Động</h3>
+          <div id="sessionList" class="priority-list">
+            <div class="loading"><i class="fa-solid fa-spinner"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <i class="fa-solid fa-check-circle"></i>
+    <span id="toastMessage">Message</span>
+  </div>
+
+  <script>
+    // ============================================================
+    // PRIORITY PAGE - Complete Rewrite with Proper Auth
+    // ============================================================
+
+let supabase = null;
+    let currentUserEmail = null;
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    async function init() {
+      console.log('Priority page: Starting initialization...');
+
+      // Load credentials from Netlify function (same as main app)
+      let SUPABASE_URL, SUPABASE_ANON_KEY;
+      try {
+        const res = await fetch('/.netlify/functions/supabase-credentials');
+        if (!res.ok) throw new Error('Failed to load credentials');
+        const creds = await res.json();
+        SUPABASE_URL = creds.SUPABASE_URL;
+        SUPABASE_ANON_KEY = creds.SUPABASE_ANON_KEY;
+      } catch (err) {
+        console.error('Failed to load Supabase credentials:', err);
+        document.getElementById('loadingScreen').innerHTML = `
+          <div style="text-align:center; color:#dc2626;">
+            <i class="fa-solid fa-exclamation-triangle" style="font-size:48px; margin-bottom:16px;"></i>
+            <p>Không thể kết nối server. Vui lòng tải lại trang.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Create Supabase client with same settings as main app
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          storage: window.localStorage,
+          detectSessionInUrl: true
+        }
+      });
+
+      // Check authentication
+      const isAuthed = await checkAuth();
+      
+      if (!isAuthed) {
+        console.log('Priority page: Auth failed, redirecting...');
+        return;
+      }
+
+      console.log('Priority page: Auth successful, showing content');
+      
+      // Hide loading, show main content
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+
+      // Load data
+      loadPriorityList();
+      loadSessions();
+
+      // Setup event listeners
+      setupEventListeners();
+
+      // Auto-refresh every 10 seconds
+      setInterval(() => {
+        loadPriorityList();
+        loadSessions();
+      }, 10000);
+    }
+
+    // ============================================================
+    // AUTH CHECK - Using getSession() instead of onAuthStateChange
+    // ============================================================
+    async function checkAuth() {
+      try {
+        // Use getSession() which properly waits for localStorage to be read
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        console.log('Priority page: Session check result:', session ? 'has session' : 'no session');
+
+        if (error) {
+          console.error('Priority page: Session error:', error);
+          redirectToHome();
+          return false;
+        }
+
+        if (!session || !session.user) {
+          console.log('Priority page: No session found');
+          redirectToHome();
+          return false;
+        }
+
+        const user = session.user;
+        console.log('Priority page: User found:', user.email);
+
+        // Check if user has Admin or Super Admin role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('email', user.email)
+          .single();
+
+        if (roleError) {
+          console.error('Priority page: Role check error:', roleError);
+          alert('Không thể kiểm tra quyền truy cập.');
+          redirectToHome();
+          return false;
+        }
+
+        if (!roleData || !['Admin', 'Super Admin'].includes(roleData.role)) {
+          console.log('Priority page: User role not allowed:', roleData?.role);
+          alert('Bạn không có quyền truy cập trang này. Chỉ Admin và Super Admin mới được phép.');
+          redirectToHome();
+          return false;
+        }
+
+        // Auth successful
+        currentUserEmail = user.email;
+        document.getElementById('currentUserDisplay').textContent = user.email;
+        console.log('Priority page: Auth successful for:', user.email, 'Role:', roleData.role);
+        
+        return true;
+
+      } catch (err) {
+        console.error('Priority page: Auth check exception:', err);
+        redirectToHome();
+        return false;
+      }
+    }
+
+    function redirectToHome() {
+      // Small delay to prevent any race conditions
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    }
+
+    // ============================================================
+    // UI FUNCTIONS
+    // ============================================================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const icon = toast.querySelector('i');
+      
+      toastMessage.textContent = message;
+      toast.className = 'toast ' + type;
+      icon.className = type === 'success' ? 'fa-solid fa-check-circle' : 'fa-solid fa-exclamation-circle';
+      
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ============================================================
+    // DATA LOADING
+    // ============================================================
+    async function loadPriorityList() {
+      try {
+        const response = await fetch('/.netlify/functions/vbot-priority-manager?action=list');
+        const data = await response.json();
+
+        const listEl = document.getElementById('priorityList');
+        const activeList = (data.priorities || []).filter(p => p.is_active);
+        
+        document.getElementById('statPriority').textContent = activeList.length;
+
+        if (activeList.length === 0) {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              <i class="fa-solid fa-inbox"></i>
+              <p>Chưa có email ưu tiên nào</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = activeList.map(p => `
+          <div class="priority-item">
+            <div class="email">
+              <i class="fa-solid fa-crown"></i>
+              ${escapeHtml(p.email)}
+            </div>
+            <button class="remove-btn" onclick="removePriority('${escapeHtml(p.email)}')">
+              <i class="fa-solid fa-trash"></i> Xóa
+            </button>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error loading priorities:', error);
+        document.getElementById('priorityList').innerHTML = `
+          <div class="empty-state">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p>Lỗi tải dữ liệu</p>
+          </div>
+        `;
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        const response = await fetch('/.netlify/functions/vbot-priority-manager?action=sessions');
+        const data = await response.json();
+
+        const listEl = document.getElementById('sessionList');
+        const sessions = data.sessions || [];
+        
+        const onlineCount = sessions.filter(s => s.is_active && s.email).length;
+        document.getElementById('statOnline').textContent = onlineCount;
+        document.getElementById('statSlots').textContent = sessions.length;
+
+        if (sessions.length === 0) {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              <i class="fa-solid fa-phone-slash"></i>
+              <p>Chưa có kênh nào</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = sessions.map(s => `
+          <div class="session-item ${s.is_active && s.email ? 'active' : 'inactive'}">
+            <div class="session-info">
+              <div class="slot-badge">${s.slot}</div>
+              <span class="session-email ${!s.email ? 'empty' : ''}">${s.email ? escapeHtml(s.email) : 'Trống'}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${s.is_priority ? '<span class="priority-badge">⭐ Ưu tiên</span>' : ''}
+              <div class="status-dot"></div>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error loading sessions:', error);
+        document.getElementById('sessionList').innerHTML = `
+          <div class="empty-state">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p>Lỗi tải dữ liệu</p>
+          </div>
+        `;
+      }
+    }
+
+    // ============================================================
+    // ACTIONS
+    // ============================================================
+    async function addPriority() {
+      const input = document.getElementById('emailInput');
+      const email = input.value.trim().toLowerCase();
+
+      if (!email) {
+        showToast('Vui lòng nhập email', 'error');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        showToast('Email không hợp lệ', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/.netlify/functions/vbot-priority-manager?action=add&email=${encodeURIComponent(email)}&added_by=${encodeURIComponent(currentUserEmail)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(data.message || 'Đã thêm email ưu tiên', 'success');
+          input.value = '';
+          loadPriorityList();
+          loadSessions();
+        } else {
+          showToast(data.error || 'Có lỗi xảy ra', 'error');
+        }
+      } catch (error) {
+        console.error('Error adding priority:', error);
+        showToast('Có lỗi xảy ra', 'error');
+      }
+    }
+
+    async function removePriority(email) {
+      if (!confirm(`Xóa "${email}" khỏi danh sách ưu tiên?`)) return;
+
+      try {
+        const response = await fetch(`/.netlify/functions/vbot-priority-manager?action=remove&email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(data.message || 'Đã xóa email ưu tiên', 'success');
+          loadPriorityList();
+          loadSessions();
+        } else {
+          showToast(data.error || 'Có lỗi xảy ra', 'error');
+        }
+      } catch (error) {
+        console.error('Error removing priority:', error);
+        showToast('Có lỗi xảy ra', 'error');
+      }
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    function setupEventListeners() {
+      document.getElementById('addBtn').addEventListener('click', addPriority);
+      document.getElementById('emailInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addPriority();
+      });
+    }
+
+    // ============================================================
+    // UTILITY
+    // ============================================================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============================================================
+    // START
+    // ============================================================
+    // Wait for Supabase library to load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
